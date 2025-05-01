@@ -5,7 +5,8 @@
         { name: "Brigtness Scale", min: 0, max: 1, step: 0.001, calc: (input: number, value: number) => value * input, defaultValue: 1 },
         { name: "Brightness Offset", min: 0, max: 1, step: 0.001, calc: (input: number, value: number) => value + input, defaultValue: 0 },
         { name: "Gamma", min: 0, max: 3, step: 0.001, calc: (input: number, value: number) => Math.pow(value, input), defaultValue: 1 },
-        { name: "Contrast", min: -3, max: 3, step: 0.001, calc: (input: number, value: number) => (value - 0.5) * input + 0.5, defaultValue: 1 },
+        { name: "Linear Contrast", min: -3, max: 3, step: 0.001, calc: (input: number, value: number) => (value - 0.5) * input + 0.5, defaultValue: 1 },
+        { name: "S Contrast", min: -3, max: 3, step: 0.001, calc: (input: number, value: number) => (value < 0.5 ? (value - 0.5) * input + 0.5 : (value - 0.5) * input + 0.5), defaultValue: 1 },
     ];
 
     const INTERPOLATION_MODES = ["Linear", "Cubic", "Nearest Neighbour"] as const;
@@ -167,7 +168,9 @@ ${lutValues
                                 <input type="range" class="form-range" id={`input${parameter.name}`} min={parameter.min} max={parameter.max} step={parameter.step} bind:value={values[parameter.name]} />
                             </td>
                             <td>
-                                {values[parameter.name].toFixed(FLOATING_POINT_DIGITS)}
+                                <span class="numbers">
+                                    {values[parameter.name].toFixed(FLOATING_POINT_DIGITS)}
+                                </span>
                             </td>
                             <td>
                                 <button class="btn btn-outline-secondary" onclick={() => (values[parameter.name] = parameter.defaultValue)}>Reset</button>
@@ -277,5 +280,9 @@ ${lutValues
     .max-h-300 {
         max-height: 300px;
         overflow-y: auto;
+    }
+
+    .numbers {
+        font-variant-numeric: tabular-nums;
     }
 </style>
