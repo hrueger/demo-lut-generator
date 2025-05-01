@@ -2,11 +2,46 @@
     import LineChart from "./LineChart.svelte";
 
     const parameters = [
-        { name: "Brigtness Scale", min: 0, max: 1, step: 0.001, calc: (input: number, value: number) => value * input, defaultValue: 1 },
-        { name: "Brightness Offset", min: 0, max: 1, step: 0.001, calc: (input: number, value: number) => value + input, defaultValue: 0 },
-        { name: "Gamma", min: 0, max: 3, step: 0.001, calc: (input: number, value: number) => Math.pow(value, input), defaultValue: 1 },
-        { name: "Linear Contrast", min: -3, max: 3, step: 0.001, calc: (input: number, value: number) => (value - 0.5) * input + 0.5, defaultValue: 1 },
-        { name: "S Contrast", min: -3, max: 3, step: 0.001, calc: (input: number, value: number) => (value < 0.5 ? (value - 0.5) * input + 0.5 : (value - 0.5) * input + 0.5), defaultValue: 1 },
+        {
+            name: "Brigtness Scale",
+            min: 0,
+            max: 1,
+            step: 0.001,
+            calc: (parameterValue: number, pixelValue: number) => pixelValue * parameterValue,
+            defaultValue: 1,
+        },
+        {
+            name: "Brightness Offset",
+            min: 0,
+            max: 1,
+            step: 0.001,
+            calc: (parameterValue: number, pixelValue: number) => pixelValue + parameterValue,
+            defaultValue: 0,
+        },
+        {
+            name: "Gamma",
+            min: 0,
+            max: 3,
+            step: 0.001,
+            calc: (parameterValue: number, pixelValue: number) => Math.pow(pixelValue, parameterValue),
+            defaultValue: 1,
+        },
+        {
+            name: "Linear Contrast",
+            min: -3,
+            max: 3,
+            step: 0.001,
+            calc: (parameterValue: number, pixelValue: number) => (pixelValue - 0.5) * parameterValue + 0.5,
+            defaultValue: 1,
+        },
+        {
+            name: "S Contrast",
+            min: 0.05,
+            max: 5,
+            step: 0.001,
+            calc: (parameterValue: number, pixelValue: number) => (pixelValue < 0.5 ? Math.pow(pixelValue * 2, parameterValue) / 2 : 1 - Math.pow((1 - pixelValue) * 2, parameterValue) / 2),
+            defaultValue: 1,
+        },
     ];
 
     const INTERPOLATION_MODES = ["Linear", "Cubic", "Nearest Neighbour"] as const;
