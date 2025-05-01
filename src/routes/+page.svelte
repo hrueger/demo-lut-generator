@@ -47,6 +47,7 @@
     const INTERPOLATION_MODES = ["Linear", "Cubic", "Nearest Neighbour"] as const;
     type InterpolationMode = (typeof INTERPOLATION_MODES)[number];
     let interpolationModes: InterpolationMode[] = $state([INTERPOLATION_MODES[0]]);
+    let imageInterpolationMode: InterpolationMode = $state(INTERPOLATION_MODES[0]);
 
     const values = $state(Object.fromEntries(parameters.map((parameter) => [parameter.name, parameter.defaultValue])));
 
@@ -60,7 +61,7 @@
 
     let lutValues: LUTValue[] = $derived.by(calculateLutValues);
     let lutData: string = $derived.by(generateLutData);
-    let lutImageUrl: string = $derived.by(applyLUT);
+    let lutImageUrl: string = $derived.by(() => applyLUT(imageInterpolationMode));
 
     function calculateLutValues() {
         let resultValues = [] as LUTValue[];
@@ -118,7 +119,7 @@ ${lutValues
                 originalImage = new Image();
                 originalImage.src = url;
                 originalImage.onload = () => {
-                    lutImageUrl = applyLUT();
+                    lutImageUrl = applyLUT(imageInterpolationMode);
                     originalImageUrl = url;
                 };
                 originalImage.onerror = () => {
@@ -129,23 +130,52 @@ ${lutValues
         input.click();
     }
 
-    function interpolateLUT(value: number, channelIndex: number): number {
-        let lower = lutValues[0];
-        let upper = lutValues[lutValues.length - 1];
+    function interpolateLUT(value: number, channelIndex: number, mode: InterpolationMode): number {
+        if (mode == "Linear") {
+            let lower = lutValues[0];
+            let upper = lutValues[lutValues.length - 1];
 
-        for (let i = 0; i < lutValues.length - 1; i++) {
-            if (lutValues[i][0] <= value && value <= lutValues[i + 1][0]) {
-                lower = lutValues[i];
-                upper = lutValues[i + 1];
-                break;
+            for (let i = 0; i < lutValues.length - 1; i++) {
+                if (lutValues[i][0] <= value && value <= lutValues[i + 1][0]) {
+                    lower = lutValues[i];
+                    upper = lutValues[i + 1];
+                    break;
+                }
             }
-        }
 
-        const t = (value - lower[0]) / (upper[0] - lower[0]);
-        return lower[channelIndex] + t * (upper[channelIndex] - lower[channelIndex]);
+            const t = (value - lower[0]) / (upper[0] - lower[0]);
+            return lower[channelIndex] + t * (upper[channelIndex] - lower[channelIndex]);
+        } else if (mode == "Cubic") {
+            /* WARNING: NOT YET CORRECT */
+            const index = lutValues.findIndex((v) => v[0] >= value);
+            if (index === -1 || index === 0 || index === lutValues.length - 1) {
+                return lutValues[index][channelIndex];
+            }
+
+            const p0 = lutValues[index - 1]?.[channelIndex];
+            const p1 = lutValues[index]?.[channelIndex];
+            const p2 = lutValues[index + 1]?.[channelIndex];
+            const p3 = lutValues[index + 2]?.[channelIndex];
+
+            if (p0 === undefined || p1 === undefined || p2 === undefined || p3 === undefined) {
+                return lutValues[index][channelIndex];
+            }
+
+            const t = (value - lutValues[index - 1][0]) / (lutValues[index + 1][0] - lutValues[index - 1][0]);
+            return (p1 * (2 * t * t * t - 3 * t * t + 1) + p2 * (-2 * t * t * t + 3 * t * t) + p0 * (t * t * t - 2 * t * t + t) + p3 * (t * t * t - t * t)) / (p1 + p2);
+        } else {
+            // Nearest Neighbour
+            let nearest = lutValues[0];
+            for (let i = 0; i < lutValues.length; i++) {
+                if (Math.abs(lutValues[i][0] - value) < Math.abs(nearest[0] - value)) {
+                    nearest = lutValues[i];
+                }
+            }
+            return nearest[channelIndex];
+        }
     }
 
-    function applyLUT(): string {
+    function applyLUT(interpolationMode: InterpolationMode): string {
         if (!originalImage) return "";
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
@@ -163,9 +193,9 @@ ${lutValues
             const g = data[i + 1] / 255;
             const b = data[i + 2] / 255;
 
-            data[i] = Math.min(interpolateLUT(r, 1) * 255, 255);
-            data[i + 1] = Math.min(interpolateLUT(g, 2) * 255, 255);
-            data[i + 2] = Math.min(interpolateLUT(b, 3) * 255, 255);
+            data[i] = Math.min(interpolateLUT(r, 1, interpolationMode) * 255, 255);
+            data[i + 1] = Math.min(interpolateLUT(g, 2, interpolationMode) * 255, 255);
+            data[i + 2] = Math.min(interpolateLUT(b, 3, interpolationMode) * 255, 255);
         }
 
         ctx.putImageData(imageData, 0, 0);
@@ -300,7 +330,14 @@ ${lutValues
                 </div>
                 {#if lutImageUrl}
                     <div class="col">
-                        <h5>Image with LUT</h5>
+                        <div class="d-flex justify-content-between">
+                            <h5>Image with LUT</h5>
+                            <select class="form-select" aria-label="Interpolation Mode" bind:value={imageInterpolationMode}>
+                                {#each INTERPOLATION_MODES.filter((m) => m != "Cubic") as mode}
+                                    <option value={mode} selected={imageInterpolationMode === mode}>{mode}</option>
+                                {/each}
+                            </select>
+                        </div>
                         <img id="lutImage" class="img-fluid border" alt="with LUT" src={lutImageUrl} />
                     </div>
                 {/if}
