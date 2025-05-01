@@ -320,6 +320,7 @@ ${lutValues
                         borderColor: "gray",
                         borderWidth: 1,
                         tension: 0,
+                        borderDash: [6, 6],
                     },
                     ...interpolationModes.map((m) => ({
                         label: "LUT",
