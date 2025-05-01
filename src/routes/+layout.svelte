@@ -11,8 +11,8 @@
     <title>Demo LUT Generator</title>
 </svelte:head>
 
-<main class="container mt-3">
-    <h1 class="border-bottom mb-3">Demo LUT Generator</h1>
+<main class="container-fluid mt-3">
+    <h1 class="border-bottom mb-3">Demo LUT Generator (aka BaseLUT)</h1>
     <slot></slot>
 </main>
 <footer class="w-100 bg-light text-center p-4">
