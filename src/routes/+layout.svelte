@@ -7,6 +7,10 @@
     });
 </script>
 
+<svelte:head>
+    <title>Demo LUT Generator</title>
+</svelte:head>
+
 <main class="container mt-3">
     <h1 class="border-bottom mb-3">Demo LUT Generator</h1>
     <slot></slot>
