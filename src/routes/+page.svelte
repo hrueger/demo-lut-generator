@@ -8,6 +8,10 @@
         { name: "Contrast", min: -3, max: 3, step: 0.001, calc: (input: number, value: number) => (value - 0.5) * input + 0.5, defaultValue: 1 },
     ];
 
+    const INTERPOLATION_MODES = ["Linear", "Cubic", "Nearest Neighbour"] as const;
+    type InterpolationMode = (typeof INTERPOLATION_MODES)[number];
+    let interpolationModes: InterpolationMode[] = $state([INTERPOLATION_MODES[0]]);
+
     const values = $state(Object.fromEntries(parameters.map((parameter) => [parameter.name, parameter.defaultValue])));
 
     let lutValueCount = $state(32);
@@ -216,6 +220,14 @@ ${lutValues
             <h3>Image Preview</h3>
             <button class="btn btn-outline-secondary mb-3" onclick={loadImage}>Load Image</button>
         </div>
+        <div>
+            <div class="btn-group">
+                {#each INTERPOLATION_MODES as mode}
+                    <input type="checkbox" class="btn-check" name="interpolationMode" id={mode} autocomplete="off" bind:group={interpolationModes} value={mode} />
+                    <label class="btn btn-outline-primary mb-3" for={mode}>{mode}</label>
+                {/each}
+            </div>
+        </div>
         <div class="row">
             <LineChart
                 datasets={[
@@ -229,16 +241,18 @@ ${lutValues
                         borderWidth: 1,
                         tension: 0,
                     },
-                    {
+                    ...interpolationModes.map((m) => ({
                         label: "LUT",
                         data: lutValues.map((value) => ({
                             x: value[0],
                             y: value[1],
                         })),
-                        borderColor: "blue",
+                        borderColor: m === "Linear" ? "orange" : m === "Cubic" ? "purple" : "pink",
                         borderWidth: 2,
                         tension: 0,
-                    },
+                        stepped: m === "Nearest Neighbour" ? ("middle" as const) : false,
+                        cubicInterpolationMode: m === "Cubic" ? ("monotone" as const) : ("default" as const),
+                    })),
                 ]}
             />
         </div>
