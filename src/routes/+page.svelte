@@ -203,9 +203,7 @@ ${lutValues
                                 <input type="range" class="form-range" id={`input${parameter.name}`} min={parameter.min} max={parameter.max} step={parameter.step} bind:value={values[parameter.name]} />
                             </td>
                             <td>
-                                <span class="numbers">
-                                    {values[parameter.name].toFixed(FLOATING_POINT_DIGITS)}
-                                </span>
+                                <input type="number" class="form-control numbers" id={`input${parameter.name}Value`} min={parameter.min} max={parameter.max} step={parameter.step} bind:value={values[parameter.name]} />
                             </td>
                             <td>
                                 <button class="btn btn-outline-secondary" onclick={() => (values[parameter.name] = parameter.defaultValue)}>Reset</button>
@@ -315,9 +313,5 @@ ${lutValues
     .max-h-300 {
         max-height: 300px;
         overflow-y: auto;
-    }
-
-    .numbers {
-        font-variant-numeric: tabular-nums;
     }
 </style>
