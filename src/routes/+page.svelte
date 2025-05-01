@@ -1,4 +1,6 @@
 <script lang="ts">
+    import LineChart from "./LineChart.svelte";
+
     let brightnessScale = $state(1);
     let lutValueCount = $state(2);
     let originalImage: HTMLImageElement | null = null;
@@ -170,6 +172,32 @@ ${lutValues
         <div class="d-flex justify-content-between">
             <h3>Image Preview</h3>
             <button class="btn btn-outline-secondary mb-3" onclick={loadImage}>Load Image</button>
+        </div>
+        <div class="row">
+            <LineChart
+                datasets={[
+                    {
+                        label: "Reference",
+                        data: [
+                            { x: 0, y: 0 },
+                            { x: 1, y: 1 },
+                        ],
+                        borderColor: "gray",
+                        borderWidth: 1,
+                        tension: 0,
+                    },
+                    {
+                        label: "LUT",
+                        data: lutValues.map((value) => ({
+                            x: value[0],
+                            y: value[1],
+                        })),
+                        borderColor: "blue",
+                        borderWidth: 2,
+                        tension: 0,
+                    },
+                ]}
+            />
         </div>
         <div class="row">
             {#if originalImageUrl}
