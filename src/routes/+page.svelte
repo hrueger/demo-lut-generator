@@ -1,6 +1,8 @@
 <script lang="ts">
     let brightnessScale = $state(1);
     let lutValueCount = $state(2);
+    let originalImage: HTMLImageElement | null = null;
+    let originalImageUrl: string | null = $state(null);
 
     const FLOATING_POINT_DIGITS = 4;
 
@@ -8,6 +10,7 @@
 
     let lutValues: LUTValue[] = $derived.by(calculateLutValues);
     let lutData: string = $derived.by(generateLutData);
+    let lutImageUrl: string = $derived.by(applyLUT);
 
     function calculateLutValues() {
         let values = [] as LUTValue[];
@@ -48,6 +51,71 @@ ${lutValues
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
+    }
+
+    function loadImage() {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = "image/*";
+        input.onchange = async (event) => {
+            const file = (event.target as HTMLInputElement).files?.[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                originalImage = new Image();
+                originalImage.src = url;
+                originalImage.onload = () => {
+                    lutImageUrl = applyLUT();
+                    originalImageUrl = url;
+                };
+                originalImage.onerror = () => {
+                    console.error("Error loading image");
+                };
+            }
+        };
+        input.click();
+    }
+
+    function interpolateLUT(value: number, channelIndex: number): number {
+        let lower = lutValues[0];
+        let upper = lutValues[lutValues.length - 1];
+
+        for (let i = 0; i < lutValues.length - 1; i++) {
+            if (lutValues[i][0] <= value && value <= lutValues[i + 1][0]) {
+                lower = lutValues[i];
+                upper = lutValues[i + 1];
+                break;
+            }
+        }
+
+        const t = (value - lower[0]) / (upper[0] - lower[0]);
+        return lower[channelIndex] + t * (upper[channelIndex] - lower[channelIndex]);
+    }
+
+    function applyLUT(): string {
+        if (!originalImage) return "";
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return "";
+
+        canvas.width = originalImage.width;
+        canvas.height = originalImage.height;
+        ctx.drawImage(originalImage, 0, 0);
+
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+
+        for (let i = 0; i < data.length; i += 4) {
+            const r = data[i] / 255;
+            const g = data[i + 1] / 255;
+            const b = data[i + 2] / 255;
+
+            data[i] = Math.min(interpolateLUT(r, 1) * 255, 255);
+            data[i + 1] = Math.min(interpolateLUT(g, 2) * 255, 255);
+            data[i + 2] = Math.min(interpolateLUT(b, 3) * 255, 255);
+        }
+
+        ctx.putImageData(imageData, 0, 0);
+        return canvas.toDataURL();
     }
 </script>
 
@@ -98,5 +166,24 @@ ${lutValues
         </div>
         <pre class="border rounded p-2">{lutData}</pre>
     </div>
-    <div class="col border-start"></div>
+    <div class="col border-start">
+        <div class="d-flex justify-content-between">
+            <h3>Image Preview</h3>
+            <button class="btn btn-outline-secondary mb-3" onclick={loadImage}>Load Image</button>
+        </div>
+        <div class="row">
+            {#if originalImageUrl}
+                <div class="col">
+                    <h5>Original Image</h5>
+                    <img id="originalImage" class="img-fluid border" alt="Original" src={originalImageUrl} />
+                </div>
+                {#if lutImageUrl}
+                    <div class="col">
+                        <h5>Image with LUT</h5>
+                        <img id="lutImage" class="img-fluid border" alt="with LUT" src={lutImageUrl} />
+                    </div>
+                {/if}
+            {/if}
+        </div>
+    </div>
 </div>
