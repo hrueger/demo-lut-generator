@@ -9,6 +9,7 @@
     Chart.register(LineController, LineElement, PointElement, LinearScale, Title, Tooltip, CategoryScale);
 
     $effect(() => {
+        datasets;
         if (!chart) return;
         chart.data.datasets = datasets;
         chart.update();
