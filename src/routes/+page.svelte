@@ -1,7 +1,7 @@
 <script lang="ts">
     import LineChart from "./LineChart.svelte";
 
-    const parameters = [
+    let parameters = $state([
         {
             name: "Brigtness Scale",
             min: 0,
@@ -42,7 +42,7 @@
             calc: (parameterValue: number, pixelValue: number) => (pixelValue < 0.5 ? Math.pow(pixelValue * 2, parameterValue) / 2 : 1 - Math.pow((1 - pixelValue) * 2, parameterValue) / 2),
             defaultValue: 1,
         },
-    ];
+    ]);
 
     const INTERPOLATION_MODES = ["Linear", "Cubic", "Nearest Neighbour"] as const;
     type InterpolationMode = (typeof INTERPOLATION_MODES)[number];
@@ -207,6 +207,14 @@ ${lutValues
             values[parameter.name] = parameter.defaultValue;
         }
     }
+
+    function moveFunction(from: number, to: number) {
+        if (from < 0 || from >= parameters.length || to < 0 || to >= parameters.length) return;
+        const temp = parameters[from];
+        parameters[from] = parameters[to];
+        parameters[to] = temp;
+        parameters = [...parameters];
+    }
 </script>
 
 <div class="row">
@@ -215,7 +223,7 @@ ${lutValues
             <table class="table table-borderless">
                 <thead>
                     <tr>
-                        <th colspan="3">
+                        <th colspan="4">
                             <h3>LUT Config</h3>
                         </th>
                         <th>
@@ -224,8 +232,14 @@ ${lutValues
                     </tr>
                 </thead>
                 <tbody>
-                    {#each parameters as parameter}
+                    {#each parameters as parameter, i}
                         <tr>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-outline-secondary" onclick={() => moveFunction(i, i - 1)} disabled={i === 0}> &uarr; </button>
+                                    <button class="btn btn-outline-secondary" onclick={() => moveFunction(i, i + 1)} disabled={i === parameters.length - 1}> &darr; </button>
+                                </div>
+                            </td>
                             <td>
                                 <label for={`input${parameter.name}`} class="">{parameter.name}</label>
                             </td>
