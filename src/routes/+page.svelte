@@ -317,6 +317,27 @@ ${lutValues
             </div>
         </div>
         <div class="row">
+            {#if originalImageUrl}
+                <div class="col">
+                    <h5>Original Image</h5>
+                    <img id="originalImage" class="img-fluid border" alt="Original" src={originalImageUrl} />
+                </div>
+                {#if lutImageUrl}
+                    <div class="col">
+                        <div class="d-flex justify-content-between gap-2">
+                            <h5 class="text-nowrap">Image with LUT</h5>
+                            <select class="form-select" aria-label="Interpolation Mode" bind:value={imageInterpolationMode}>
+                                {#each INTERPOLATION_MODES.filter((m) => m != "Cubic") as mode}
+                                    <option value={mode} selected={imageInterpolationMode === mode}>{mode}</option>
+                                {/each}
+                            </select>
+                        </div>
+                        <img id="lutImage" class="img-fluid border" alt="with LUT" src={lutImageUrl} />
+                    </div>
+                {/if}
+            {/if}
+        </div>
+        <div class="row">
             <LineChart
                 datasets={[
                     {
@@ -344,27 +365,6 @@ ${lutValues
                     })),
                 ]}
             />
-        </div>
-        <div class="row">
-            {#if originalImageUrl}
-                <div class="col">
-                    <h5>Original Image</h5>
-                    <img id="originalImage" class="img-fluid border" alt="Original" src={originalImageUrl} />
-                </div>
-                {#if lutImageUrl}
-                    <div class="col">
-                        <div class="d-flex justify-content-between gap-2">
-                            <h5 class="text-nowrap">Image with LUT</h5>
-                            <select class="form-select" aria-label="Interpolation Mode" bind:value={imageInterpolationMode}>
-                                {#each INTERPOLATION_MODES.filter((m) => m != "Cubic") as mode}
-                                    <option value={mode} selected={imageInterpolationMode === mode}>{mode}</option>
-                                {/each}
-                            </select>
-                        </div>
-                        <img id="lutImage" class="img-fluid border" alt="with LUT" src={lutImageUrl} />
-                    </div>
-                {/if}
-            {/if}
         </div>
     </div>
 </div>
