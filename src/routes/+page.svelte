@@ -130,6 +130,17 @@ ${lutValues
         input.click();
     }
 
+    const precomputedLUT: number[][] = Array.from({ length: 256 }, () => [0, 0, 0]);
+
+    function buildLUT(interpolationMode: InterpolationMode) {
+        for (let i = 0; i < 256; i++) {
+            const value = i / 255;
+            precomputedLUT[i][0] = interpolateLUT(value, 1, interpolationMode) * 255; // R
+            precomputedLUT[i][1] = interpolateLUT(value, 2, interpolationMode) * 255; // G
+            precomputedLUT[i][2] = interpolateLUT(value, 3, interpolationMode) * 255; // B
+        }
+    }
+
     function interpolateLUT(value: number, channelIndex: number, mode: InterpolationMode): number {
         if (mode == "Linear") {
             let lower = lutValues[0];
@@ -188,14 +199,11 @@ ${lutValues
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const data = imageData.data;
 
+        buildLUT(interpolationMode);
         for (let i = 0; i < data.length; i += 4) {
-            const r = data[i] / 255;
-            const g = data[i + 1] / 255;
-            const b = data[i + 2] / 255;
-
-            data[i] = Math.min(interpolateLUT(r, 1, interpolationMode) * 255, 255);
-            data[i + 1] = Math.min(interpolateLUT(g, 2, interpolationMode) * 255, 255);
-            data[i + 2] = Math.min(interpolateLUT(b, 3, interpolationMode) * 255, 255);
+            data[i] = precomputedLUT[data[i]][0];
+            data[i + 1] = precomputedLUT[data[i + 1]][1];
+            data[i + 2] = precomputedLUT[data[i + 2]][2];
         }
 
         ctx.putImageData(imageData, 0, 0);
@@ -345,8 +353,8 @@ ${lutValues
                 </div>
                 {#if lutImageUrl}
                     <div class="col">
-                        <div class="d-flex justify-content-between">
-                            <h5>Image with LUT</h5>
+                        <div class="d-flex justify-content-between gap-2">
+                            <h5 class="text-nowrap">Image with LUT</h5>
                             <select class="form-select" aria-label="Interpolation Mode" bind:value={imageInterpolationMode}>
                                 {#each INTERPOLATION_MODES.filter((m) => m != "Cubic") as mode}
                                     <option value={mode} selected={imageInterpolationMode === mode}>{mode}</option>
